@@ -9,6 +9,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/user")
@@ -17,44 +18,33 @@ public class UserController {
 
     private final UserServiceImpl userService;
 
-    // 🟢 PUBLICO: Registro de usuarios
+
     @PostMapping("/register")
     public ResponseEntity<Response<?>> register(@RequestBody RegistrationRequest request) {
         return ResponseEntity.ok(userService.register(request));
     }
 
-    // 🟢 PUBLICO: Login de usuario
+
     @PostMapping("/login")
     public ResponseEntity<Response<LoginResponse>> login(@RequestBody LoginRequest request) {
         return ResponseEntity.ok(userService.login(request));
     }
 
-    // 🔒 CUALQUIER USUARIO AUTENTICADO: Obtener su ID
-    @GetMapping("/me/id")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Response<Long>> getCurrentUserId() {
-        Long id = userService.currentUserId();
-        return ResponseEntity.ok(Response.<Long>builder()
-                .statusCode(200)
-                .message("ID de usuario actual obtenido correctamente")
-                .data(id)
-                .build());
-    }
 
-    // 🔒 CUALQUIER USUARIO AUTENTICADO: Actualizar su propia cuenta
-    @PutMapping("/me")
+    @PutMapping
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Response<?>> updateMyAccount(@RequestBody UserDTO userDTO) {
         return ResponseEntity.ok(userService.updateMyAccount(userDTO));
     }
 
-    // 🔒 SOLO SUPER_ADMIN: Listar todos los usuarios
-    @GetMapping("/all")
+
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @GetMapping("/find-all")
     public ResponseEntity<Response<List<UserDTO>>> findAllUsers() {
         return ResponseEntity.ok(userService.findAllUsers());
     }
 
-    // 🔒 SOLO SUPER_ADMIN: Actualizar usuario por ID
+
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('SUPER_ADMIN')")
     public ResponseEntity<Response<UserDTO>> updateUserById(
@@ -64,21 +54,22 @@ public class UserController {
         return ResponseEntity.ok(userService.updateUserById(id, userDTO));
     }
 
-    // 🔒 SOLO SUPER_ADMIN: Eliminar usuario por email
-    @DeleteMapping("/delete/{email}")
+
+    @DeleteMapping("/delete")
     @PreAuthorize("hasAuthority('SUPER_ADMIN')")
-    public ResponseEntity<Response<?>> deleteUser(@PathVariable String email) {
+    public ResponseEntity<Response<?>> deleteUser(@RequestBody Map<String, String> body) {
+        String email = body.get("email");
         return ResponseEntity.ok(userService.deleteUser(email));
     }
 
-    // 🔒 SOLO SUPER_ADMIN: Buscar usuarios por rol
-    @GetMapping("/role/{role}")
+
+    @GetMapping("/find-by-role")
     @PreAuthorize("hasAuthority('SUPER_ADMIN')")
-    public ResponseEntity<Response<List<UserDTO>>> findAllUsersByRole(@PathVariable Role role) {
+    public ResponseEntity<Response<List<UserDTO>>> findAllUsersByRole(@RequestParam Role role) {
         return ResponseEntity.ok(userService.findAllUsersByRole(role));
     }
 
-    // 🔒 SOLO SUPER_ADMIN: Crear usuario con rol DAEMON
+
     @PostMapping("/create-daemon")
     @PreAuthorize("hasAuthority('SUPER_ADMIN')")
     public ResponseEntity<Response<?>> createUserWithRoleDaemon(@RequestBody UserDTO userDTO) {
