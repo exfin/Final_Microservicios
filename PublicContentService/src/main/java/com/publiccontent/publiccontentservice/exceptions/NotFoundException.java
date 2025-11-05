@@ -1,4 +1,4 @@
-package com.users.microreports.exceptions;
+package com.publiccontent.publiccontentservice.exceptions;
 
 public class NotFoundException extends RuntimeException {
     public NotFoundException(String message) {
