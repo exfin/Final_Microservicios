@@ -10,6 +10,7 @@ import com.users.microreports.exceptions.BadRequestException;
 import com.users.microreports.exceptions.NotFoundException;
 import com.users.microreports.models.Report;
 import com.users.microreports.security.JwtUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -25,34 +26,61 @@ import java.util.List;
 public class ReportServiceImpl implements ReportService {
     private final ReportRepo reportRepo;
     public final JwtUtil jwtUtil;
+    private final HttpServletRequest request;
 
 
+    private String bearer() {
+        String h = request.getHeader("Authorization");
+        if (h == null) return "";
+        h = h.trim();
+        return h.toLowerCase().startsWith("bearer ") ? h.substring(7) : h;
+    }
     @Override
     public Response<?> createReport(ReportDTO reportDTO) {
-        if (reportDTO.getTitle() == null || reportDTO.getDescription() == null) {
+        if (reportDTO.getTitle() == null || reportDTO.getTitle().isBlank() ||
+                reportDTO.getDescription() == null || reportDTO.getDescription().isBlank()) {
             throw new BadRequestException("El título y la descripción son obligatorios");
         }
 
         Report report = new Report();
         report.setAnonymous(reportDTO.isAnonymous());
-        report.setCreatedById(reportDTO.getCreatedBy());
         report.setIpHash(reportDTO.getIpHash());
-        report.setTitle(reportDTO.getTitle());
-        report.setDescription(reportDTO.getDescription());
-        report.setSeverity(reportDTO.getSeverity() != null ? reportDTO.getSeverity() : ReportSeverity.MEDIUM);
+        report.setTitle(reportDTO.getTitle().trim());
+        report.setDescription(reportDTO.getDescription().trim());
+        report.setSeverity(
+                reportDTO.getSeverity() != null ? reportDTO.getSeverity() : ReportSeverity.MEDIUM
+        );
         report.setVictimId(reportDTO.getVictimId());
         report.setStatus(ReportStatus.NEW);
         report.setCreatedAt(LocalDateTime.now());
         report.setUpdatedAt(LocalDateTime.now());
 
+        if (!reportDTO.isAnonymous()) {
+            try {
+                String token = bearer();
+                Long userId = jwtUtil.extractUserId(token);
+                if (userId != null) {
+                    report.setCreatedById(userId);
+                } else {
+                    throw new BadRequestException("Token inválido: no se pudo extraer el ID del usuario");
+                }
+            } catch (Exception e) {
+                throw new BadRequestException("No se pudo leer el token del usuario: " + e.getMessage());
+            }
+        } else {
+
+            report.setCreatedById(null);
+        }
+
         Report saved = reportRepo.save(report);
 
-        return  Response.builder()
+        return Response.builder()
                 .statusCode(HttpStatus.CREATED.value())
-                .message("Reporte Creado exitosamente")
+                .message("Reporte creado exitosamente")
                 .data(toDTO(saved))
                 .build();
     }
+
 
     @Override
     public Response<List<ReportDTO>> getAllReports() {
@@ -67,14 +95,16 @@ public class ReportServiceImpl implements ReportService {
 
     @Override
     public Response<List<ReportDTO>> getMyReports() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-
-        if (auth == null || !(auth.getPrincipal() instanceof CustomUserPrincipal principal)) {
-            throw new BadRequestException("Usuario no autenticado");
+        Long userId = null;
+        try {
+            String token = bearer();
+            userId = jwtUtil.extractUserId(token);
+        } catch (Exception e) {
+            throw new BadRequestException("No se pudo leer el token del usuario: " + e.getMessage());
         }
-
-        Long userId = principal.getId();
-
+        if (userId == null) {
+            throw new BadRequestException("No se pudo determinar el usuario autenticado");
+        }
         List<Report> reports = reportRepo.findByCreatedByIdOrderByCreatedAtDesc(userId);
 
         List<ReportDTO> reportDTOs = reports.stream().map(this::toDTO).toList();
@@ -119,7 +149,11 @@ public class ReportServiceImpl implements ReportService {
         report.setUpdatedAt(LocalDateTime.now());
 
         Report updated = reportRepo.save(report);
-        return new Response<>(200, "Reporte actualizado correctamente", toDTO(updated));
+        return Response.<ReportDTO>builder()
+                .statusCode(HttpStatus.OK.value())
+                .message("Reporte actualizado con exito")
+                .data(toDTO(updated))
+                .build();
     }
 
     private ReportDTO toDTO(Report report) {

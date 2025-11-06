@@ -11,7 +11,7 @@ import java.security.Key;
 
 @Component
 public class JwtUtil {
-    private static final String SECRET = "clavesesupercreta123456789123456789";
+    private static final String SECRET = "cea8f906828900a4bdbe8a6e7366cde4bcae206fd43f1bd96548fb1002ac0039";
     private final Key key = Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
 
     public boolean validateToken(String token) {
@@ -28,10 +28,19 @@ public class JwtUtil {
     }
 
     public Long extractUserId(String token) {
-        Claims claims = Jwts.parser()
-                .setSigningKey(SECRET)
-                .parseClaimsJws(token.replace("Bearer ", ""))
-                .getBody();
-        return claims.get("id", Long.class);
+        try {
+            String cleanToken = token.startsWith("Bearer ") ? token.substring(7) : token;
+
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(key)
+                    .build()
+                    .parseClaimsJws(cleanToken)
+                    .getBody();
+
+            return claims.get("id", Long.class);
+        } catch (Exception e) {
+            System.out.println("No se pudo extraer userId del token: " + e.getMessage());
+            return null;
+        }
     }
 }

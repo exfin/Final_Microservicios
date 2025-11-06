@@ -14,7 +14,7 @@ import java.util.Date;
 
 @Component
 public class JwtUtil {
-    private static final String SECRET = "clavesesupercreta123456789123456789";
+    private static final String SECRET = "cea8f906828900a4bdbe8a6e7366cde4bcae206fd43f1bd96548fb1002ac0039";
     private final Key key = Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
 
     public String generateToken(User user) {

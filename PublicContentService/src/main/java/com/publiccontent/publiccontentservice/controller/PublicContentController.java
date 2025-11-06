@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/content")
+@RequestMapping("/content")
 @RequiredArgsConstructor
 public class PublicContentController {
 
@@ -23,7 +23,7 @@ public class PublicContentController {
     }
 
     @GetMapping("/all")
-    @PreAuthorize("hasAuthority('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<Response<List<PublicContentDTO>>> getAllEvents() {
         return ResponseEntity.ok(publicContentService.getAllEvents());
     }
@@ -39,7 +39,7 @@ public class PublicContentController {
     }
 
     @PutMapping("/update/{id}")
-    @PreAuthorize("hasAuthority('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<Response<PublicContentDTO>> updateApprovedById(@PathVariable ("id") Long id, @RequestBody PublicContentDTO publicContentDTO ) {
         return ResponseEntity.ok(publicContentService.updateApprovedById(publicContentDTO, id));
     }

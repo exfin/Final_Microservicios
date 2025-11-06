@@ -36,14 +36,18 @@ public class PublicContentServiceImpl implements PublicContentService {
     @Override
     public Response<?> createPublicContent(PublicContentDTO dto) {
         if (dto.getTitle() == null || dto.getTitle().isBlank())
-            throw new BadRequestException("El titulo es obligatorio");
+            throw new BadRequestException("El título es obligatorio");
         if (dto.getBodyMd() == null || dto.getBodyMd().isBlank())
             throw new BadRequestException("El contenido es obligatorio");
 
-        // Extrae userId desde el JWT (sin depender de otra BD/servicio)
-        // Usamos tu JwtUtil tal cual lo pegaste:
-        Long userId = jwtUtil.extractUserId("Bearer " + bearer());
-        if (userId == null) throw new BadRequestException("Token inválido o sin claim 'id'");
+        // Intentamos extraer el userId del token (sin romper si no existe)
+        Long userId = null;
+        try {
+            String token = bearer();
+            userId = jwtUtil.extractUserId(token);
+        } catch (Exception e) {
+            System.out.println("No se pudo extraer userId del token: " + e.getMessage());
+        }
 
         PublicContent entity = new PublicContent();
         entity.setTitle(dto.getTitle().trim());
@@ -52,9 +56,13 @@ public class PublicContentServiceImpl implements PublicContentService {
         entity.setImageUrl(dto.getImageUrl());
         entity.setAltText(dto.getAltText());
         entity.setApproved(false);
-        entity.setUserId(userId);                 // ← solo ID, nada de @ManyToOne
         entity.setCreatedAt(LocalDateTime.now());
         entity.setUpdatedAt(LocalDateTime.now());
+
+        // Solo asigna el userId si existe
+        if (userId != null) {
+            entity.setUserId(userId);
+        }
 
         PublicContent saved = publicContentRepo.save(entity);
 
@@ -64,6 +72,7 @@ public class PublicContentServiceImpl implements PublicContentService {
                 .data(modelMapper.map(saved, PublicContentDTO.class))
                 .build();
     }
+
 
     @Override
     public Response<List<PublicContentDTO>> getApprovedPublicContent() {
