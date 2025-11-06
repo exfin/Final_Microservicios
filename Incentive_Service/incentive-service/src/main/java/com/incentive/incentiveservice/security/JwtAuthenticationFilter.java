@@ -1,7 +1,6 @@
-package com.victims.victimsservice.security;
+package com.incentive.incentiveservice.security;
 
-
-import com.victims.victimsservice.dto.CustomUserPrincipal;
+import com.incentive.incentiveservice.dto.CustomUserPrincipal;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

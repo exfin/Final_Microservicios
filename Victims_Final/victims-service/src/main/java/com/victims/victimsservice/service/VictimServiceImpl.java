@@ -26,19 +26,11 @@ public class VictimServiceImpl implements VictimService {
     private final JwtUtil jwtUtil;
     private final HttpServletRequest request;
 
-    /** Quita "Bearer " si viene en el header */
     private String bearer() {
         String h = request.getHeader("Authorization");
         if (h == null) return "";
         h = h.trim();
         return h.toLowerCase().startsWith("bearer ") ? h.substring(7) : h;
-    }
-
-    /** Obtiene userId del JWT (claim "id") */
-    private long currentUserId() {
-        Long id = jwtUtil.extractUserId("Bearer " + bearer());
-        if (id == null) throw new BadRequestException("Invalid token: missing 'id' claim");
-        return id;
     }
 
     @Override
@@ -53,7 +45,18 @@ public class VictimServiceImpl implements VictimService {
             throw new BadRequestException("Victim code already exists");
         });
 
-        long creatorId = currentUserId();
+        Long userId = null;
+
+        try {
+            String token = bearer();
+            userId = jwtUtil.extractUserId(token);
+        } catch (Exception e) {
+            throw new BadRequestException("No se pudo leer el token del usuario: " + e.getMessage());
+        }
+
+        if (userId == null) {
+            throw new BadRequestException("No se pudo determinar el usuario autenticado");
+        }
 
         Victim victimToSave = new Victim();
         victimToSave.setCode(code);
@@ -61,7 +64,7 @@ public class VictimServiceImpl implements VictimService {
         victimToSave.setNotes(victimDTO.getNotes());
         victimToSave.setRiskLevel(victimDTO.getRiskLevel());
         victimToSave.setActive(true);
-        victimToSave.setCreatedBy(creatorId);           // ← solo ID
+        victimToSave.setCreatedBy(userId);           // ← solo ID
         victimToSave.setCreatedAt(LocalDateTime.now());
         victimToSave.setUpdatedAt(null);
 
@@ -142,9 +145,20 @@ public class VictimServiceImpl implements VictimService {
 
     @Override
     public Response<List<VictimDTO>> getMyVictims() {
-        long me = currentUserId();
+        Long userId = null;
 
-        List<VictimDTO> dtos = victimRepo.findByCreatedById(me).stream()
+        try {
+            String token = bearer();
+            userId = jwtUtil.extractUserId(token);
+        } catch (Exception e) {
+            throw new BadRequestException("No se pudo leer el token del usuario: " + e.getMessage());
+        }
+
+        if (userId == null) {
+            throw new BadRequestException("No se pudo determinar el usuario autenticado");
+        }
+
+        List<VictimDTO> dtos = victimRepo.findByCreatedBy(userId).stream()
                 .map(v -> modelMapper.map(v, VictimDTO.class))
                 .toList();
 

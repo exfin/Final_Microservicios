@@ -20,7 +20,7 @@ public class IncentiveEvent {
     private Long id;
 
     @Column(nullable = false)
-    private Long user;
+    private Long userId;
 
     @Column(nullable = false)
     private Long assignedBy;

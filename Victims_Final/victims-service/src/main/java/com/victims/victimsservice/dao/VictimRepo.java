@@ -10,6 +10,6 @@ public interface VictimRepo extends JpaRepository<Victim, Long> {
 
     Optional<Victim> findByCode(String code);
 
-    List<Victim> findByCreatedById(Long userId);
+    List<Victim> findByCreatedBy(Long userId);
 }
 

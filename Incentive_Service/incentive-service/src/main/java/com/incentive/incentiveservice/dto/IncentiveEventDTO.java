@@ -13,9 +13,9 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class IncentiveEventDTO {
 
-    private long user;
+    private Long userId;
 
-    private long assignedBy;
+    private Long assignedBy;
 
     private IncentiveType type;
 

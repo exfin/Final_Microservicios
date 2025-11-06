@@ -46,7 +46,7 @@ public class UserController {
 
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<Response<UserDTO>> updateUserById(
             @PathVariable Long id,
             @RequestBody UserDTO userDTO
@@ -56,7 +56,7 @@ public class UserController {
 
 
     @DeleteMapping("/delete")
-    @PreAuthorize("hasAuthority('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<Response<?>> deleteUser(@RequestBody Map<String, String> body) {
         String email = body.get("email");
         return ResponseEntity.ok(userService.deleteUser(email));
@@ -64,14 +64,14 @@ public class UserController {
 
 
     @GetMapping("/find-by-role")
-    @PreAuthorize("hasAuthority('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<Response<List<UserDTO>>> findAllUsersByRole(@RequestParam Role role) {
         return ResponseEntity.ok(userService.findAllUsersByRole(role));
     }
 
 
     @PostMapping("/create-daemon")
-    @PreAuthorize("hasAuthority('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<Response<?>> createUserWithRoleDaemon(@RequestBody UserDTO userDTO) {
         return ResponseEntity.ok(userService.createUserWithRoleDaemon(userDTO));
     }

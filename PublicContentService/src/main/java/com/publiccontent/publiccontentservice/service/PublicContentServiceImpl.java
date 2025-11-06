@@ -89,7 +89,7 @@ public class PublicContentServiceImpl implements PublicContentService {
 
     @Override
     public Response<List<PublicContentDTO>> getApprovedFalsePublicContentById() {
-        // (el nombre del método en la interfaz dice "ById" pero no recibe id; dejamos la lógica de pendientes)
+
         List<PublicContentDTO> list = publicContentRepo
                 .findByApprovedFalseOrderByCreatedAtDesc()
                 .stream().map(pc -> modelMapper.map(pc, PublicContentDTO.class)).toList();

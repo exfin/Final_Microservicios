@@ -14,6 +14,6 @@ public interface IncentiveEventRepo extends JpaRepository<IncentiveEvent, Long> 
 
     List<IncentiveEvent> findByTypeOrderByCreatedAtDesc(IncentiveType type);
 
-    @Query("select coalesce(sum(i.points), 0) from IncentiveEvent i where i.user = :user")
+    @Query("select coalesce(sum(i.points), 0) from IncentiveEvent i where i.userId = :user")
     int sumPointsByUser(@Param("user") Long user);
 }

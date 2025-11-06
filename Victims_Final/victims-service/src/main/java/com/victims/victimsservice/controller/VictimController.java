@@ -12,39 +12,39 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/victim")
+@RequestMapping("/victim")
 @RequiredArgsConstructor
 public class VictimController {
 
     private final VictimService victimService;
 
     @PostMapping("/create")
-    @PreAuthorize("hasAnyAuthority('DAEMON')")
+    @PreAuthorize("hasAnyRole('DAEMON', 'SUPER_ADMIN')")
     public ResponseEntity<Response<?>> createVictim(@RequestBody VictimDTO victimDTO) {
         return ResponseEntity.ok(victimService.createVictim(victimDTO));
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('DAEMON', 'SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('DAEMON', 'SUPER_ADMIN')")
     public ResponseEntity<Response<VictimDTO>> getVictimById(@PathVariable ("id") Long id) {
         return ResponseEntity.ok(victimService.getVictimById(id));
     }
 
     @GetMapping("/all")
-    @PreAuthorize("hasAnyAuthority('DAEMON', 'SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('DAEMON', 'SUPER_ADMIN')")
     public ResponseEntity<Response<List<VictimDTO>>> getAllVictims() {
         return ResponseEntity.ok(victimService.getAllVictims());
     }
 
     @PostMapping("/delete")
-    @PreAuthorize("hasAnyAuthority('DAEMON', 'SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('DAEMON', 'SUPER_ADMIN')")
     public ResponseEntity<Response<?>> deleteVictim(@RequestBody Map<String, String> body) {
         String code = body.get("code");
         return ResponseEntity.ok(victimService.deleteVictim(code));
     }
 
     @GetMapping("/my-victims")
-    @PreAuthorize("hasAnyAuthority('DAEMON')")
+    @PreAuthorize("hasRole('DAEMON')")
     public ResponseEntity<Response<List<VictimDTO>>> getMyVictims() {
         return ResponseEntity.ok(victimService.getMyVictims());
     }

@@ -6,6 +6,8 @@ import com.incentive.incentiveservice.enums.IncentiveType;
 import com.incentive.incentiveservice.models.IncentiveEvent;
 import com.incentive.incentiveservice.repo.IncentiveEventRepo;
 import com.incentive.incentiveservice.exceptions.BadRequestException; // si tu excepción está en otro paquete, ajusta import
+import com.incentive.incentiveservice.security.JwtUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
@@ -20,15 +22,21 @@ public class IncentiveEventServiceImpl implements IncentiveEventService {
 
     private final IncentiveEventRepo incentiveEventRepo;
     private final ModelMapper modelMapper;
+    private final HttpServletRequest request;
+    public final JwtUtil jwtUtil;
+
+    private String bearer() {
+        String h = request.getHeader("Authorization");
+        if (h == null) return "";
+        h = h.trim();
+        return h.toLowerCase().startsWith("bearer ") ? h.substring(7) : h;
+    }
 
     @Override
     public Response<?> createIncentiveEvent(IncentiveEventDTO incentiveEventDTO) {
 
-        if (incentiveEventDTO.getUser() <= 0) {
+        if (incentiveEventDTO.getUserId() <= 0) {
             throw new BadRequestException("El beneficiario (user) es obligatorio y debe ser > 0");
-        }
-        if (incentiveEventDTO.getAssignedBy() <= 0) {
-            throw new BadRequestException("El asignador (assignedBy) es obligatorio y debe ser > 0");
         }
         if (incentiveEventDTO.getName() == null || incentiveEventDTO.getName().isBlank()) {
             throw new BadRequestException("El nombre es obligatorio");
@@ -43,9 +51,22 @@ public class IncentiveEventServiceImpl implements IncentiveEventService {
             throw new BadRequestException("Los puntos no pueden ser 0");
         }
 
+        Long userId = null;
+
+        try {
+            String token = bearer();
+            userId = jwtUtil.extractUserId(token);
+        } catch (Exception e) {
+            throw new BadRequestException("No se pudo leer el token del usuario: " + e.getMessage());
+        }
+
+        if (userId == null) {
+            throw new BadRequestException("No se pudo determinar el usuario autenticado");
+        }
+
         IncentiveEvent entity = new IncentiveEvent();
-        entity.setUser(incentiveEventDTO.getUser());               // ID plano
-        entity.setAssignedBy(incentiveEventDTO.getAssignedBy());   // ID plano
+        entity.setUserId(incentiveEventDTO.getUserId());
+        entity.setAssignedBy(userId);
         entity.setType(incentiveEventDTO.getType());
         entity.setName(incentiveEventDTO.getName().trim());
         entity.setDescription(incentiveEventDTO.getDescription().trim());

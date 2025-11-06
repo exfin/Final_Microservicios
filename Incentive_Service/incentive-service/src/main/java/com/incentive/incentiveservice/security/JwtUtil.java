@@ -1,4 +1,4 @@
-package com.victims.victimsservice.security;
+package com.incentive.incentiveservice.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
