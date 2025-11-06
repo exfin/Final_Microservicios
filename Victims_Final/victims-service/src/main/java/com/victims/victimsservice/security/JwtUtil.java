@@ -11,8 +11,19 @@ import java.security.Key;
 
 @Component
 public class JwtUtil {
-    private static final String SECRET = "clavesesupercreta123456789123456789";
+    private static final String SECRET = "cea8f906828900a4bdbe8a6e7366cde4bcae206fd43f1bd96548fb1002ac0039";
     private final Key key = Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
+
+    public String generateToken(User user) {
+        return Jwts.builder()
+                .setSubject(user.getEmail())
+                .claim("id", user.getId())
+                .claim("role", user.getRole().name())
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + 86400000)) // 1 día
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
+    }
 
     public boolean validateToken(String token) {
         try {
